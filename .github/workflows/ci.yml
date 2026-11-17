@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend — import & syntax check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/assessment-api/requirements.txt
+      - name: Install system deps for WeasyPrint
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpango-1.0-0 libpangoft2-1.0-0 libcairo2 libgdk-pixbuf-2.0-0 libffi-dev shared-mime-info
+      - name: Install Python deps
+        working-directory: backend/assessment-api
+        run: pip install -r requirements-dev.txt
+      - name: Unit tests
+        working-directory: backend/assessment-api
+        run: pytest -q
+      - name: Compile-check all Python sources
+        working-directory: backend/assessment-api
+        run: python -m compileall -q app scripts tests
+      - name: Smoke import — FastAPI app loads
+        working-directory: backend/assessment-api
+        env:
+          ENVIRONMENT: development
+          SUPABASE_URL: https://example.supabase.co
+          SUPABASE_SERVICE_KEY: dummy
+          ANTHROPIC_API_KEY: dummy
+          APP_SECRET_KEY: dummy-ci-secret
+        run: python -c "from app.main import app; print('OK', app.title)"
+
+  frontend:
+    name: Frontend — i18n key parity & HTML lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verify FR/EN/NL key parity in i18n module
+        run: |
+          python <<'PY'
+          import re, sys
+          js = open('frontend/i18n.js').read()
+          fr = re.search(r'fr:\s*\{(.*?)\n\s*\},\s*\n\s*en:', js, re.DOTALL).group(1)
+          en = re.search(r'en:\s*\{(.*?)\n\s*\},\s*\n\s*nl:', js, re.DOTALL).group(1)
+          nl = re.search(r'nl:\s*\{(.*?)\n\s*\},\s*\n\s*\}', js, re.DOTALL).group(1)
+          k = lambda s: set(re.findall(r'\n      ([a-zA-Z_]\w*):', s))
+          fr_k, en_k, nl_k = k(fr), k(en), k(nl)
+          missing_en = fr_k - en_k
+          missing_nl = fr_k - nl_k
+          extra_en = en_k - fr_k
+          extra_nl = nl_k - fr_k
+          if missing_en or missing_nl or extra_en or extra_nl:
+              print(f"FAIL — keys out of sync")
+              print(f"  missing in EN: {sorted(missing_en)}")
+              print(f"  missing in NL: {sorted(missing_nl)}")
+              print(f"  extra in EN:   {sorted(extra_en)}")
+              print(f"  extra in NL:   {sorted(extra_nl)}")
+              sys.exit(1)
+          print(f"OK — {len(fr_k)} keys in FR/EN/NL all in sync")
+          PY
+      - name: Verify config.js exists and frontend HTMLs include it
+        run: |
+          test -f frontend/config.js
+          for f in frontend/player.html frontend/dashboard.html frontend/report-demo.html; do
+            grep -q 'src="config.js"' "$f" || { echo "FAIL — $f does not include config.js"; exit 1; }
+          done
+          echo "OK — config.js wired into all three frontends"

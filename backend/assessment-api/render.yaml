@@ -1,0 +1,41 @@
+services:
+  - type: web
+    name: assessment-api
+    runtime: docker
+    dockerfilePath: ./backend/assessment-api/Dockerfile
+    dockerContext: ./backend/assessment-api
+    region: frankfurt
+    plan: free
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: PYTHON_VERSION
+        value: "3.12"
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RECRUITER_EMAIL
+        sync: false
+      - key: RECRUITER_PASSWORD
+        sync: false
+      - key: APP_SECRET_KEY
+        generateValue: true
+      - key: APP_BASE_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: LEGAL_CONTACT_EMAIL
+        sync: false
+      - key: NOTIFICATION_EMAIL
+        sync: false
+      - key: SENTRY_DSN
+        sync: false

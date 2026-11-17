@@ -1,0 +1,1 @@
+/test/:token   /player?token=:token   200
