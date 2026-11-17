@@ -20,7 +20,7 @@
 | **Transferts hors UE** | Anthropic Inc. (USA) — Claude Opus 4.6 pour génération du rapport narratif — couvert par Clauses Contractuelles Types (CCT) UE |
 | **Durée de conservation** | 12 mois à compter de la date de soumission du test (`expires_at`) — purge automatique hebdomadaire via pg_cron |
 | **Mesures de sécurité** | Chiffrement en transit (TLS 1.3) · Chiffrement au repos (Supabase/PostgreSQL) · Accès recruteur via JWT HS256 · RLS Supabase · Tokens d'accès candidat à usage unique · Consentement IP horodaté |
-| **DPIA requise** | Oui — voir `legal/dpia-checklist.md` (traitement de données de personnalité à grande échelle, décision assistée) |
+| **DPIA requise** | Oui — voir `docs/compliance/dpia-checklist.md` (traitement de données de personnalité à grande échelle, décision assistée) |
 
 ---
 
@@ -46,7 +46,7 @@
 |-------|--------|
 | **Finalité** | Envoi du lien de test au candidat et notification de complétion au recruteur |
 | **Base légale** | Art. 6§1b RGPD — nécessaire à l'exécution d'une démarche précontractuelle |
-| **Sous-traitant** | Resend Inc. (USA) — voir `legal/dpa-sous-traitants.md` |
+| **Sous-traitant** | Resend Inc. (USA) — voir `docs/compliance/dpa-sous-traitants.md` |
 | **Données transmises** | Nom · Email · Lien unique · Score global (notification recruteur uniquement) |
 | **Durée de conservation** | Logs Resend : 30 jours (configurable via tableau de bord Resend) |
 | **Transferts hors UE** | Resend Inc. (USA) — CCT UE |
@@ -61,7 +61,7 @@
 | Anthropic Inc. | Génération rapport narratif (Claude Opus 4.6) | USA | CCT UE |
 | Resend Inc. | Envoi d'emails transactionnels | USA | CCT UE |
 
-> **Action requise :** Vérifier que les DPA (Data Processing Agreements) sont signés avec chaque sous-traitant. Voir `legal/dpa-sous-traitants.md`.
+> **Action requise :** Vérifier que les DPA (Data Processing Agreements) sont signés avec chaque sous-traitant. Voir `docs/compliance/dpa-sous-traitants.md`.
 
 ---
 

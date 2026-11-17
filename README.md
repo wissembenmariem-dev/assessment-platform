@@ -8,7 +8,7 @@ Built with compliance in mind: GDPR (consent, access and erasure endpoints, rete
 
 | Layer | Technology |
 |---|---|
-| API | FastAPI · Pydantic v2 · slowapi rate limiting · optional Sentry |
+| API | FastAPI · Pydantic v2 · PyJWT · slowapi rate limiting (proxy-aware, pluggable storage) · optional Sentry |
 | Data | Supabase (PostgreSQL, row-level security) |
 | LLM | Anthropic Claude: a fast model for interactive calls, a larger model for the final report |
 | Reports | HTML report rendered to PDF with WeasyPrint |
@@ -40,6 +40,7 @@ frontend/ (Cloudflare Pages)
   player.html        candidate test player
   report-demo.html   report viewer and PDF export
   i18n.js            FR / NL / EN strings
+  js/ · css/         page scripts and styles, shared HTML escaping in js/utils.js
         │  HTTPS, JWT for recruiters, opaque token for candidates
         ▼
 backend/assessment-api/ (FastAPI on Render)
@@ -85,7 +86,8 @@ Serve `frontend/` with any static server and set `window.ASSESSMENT_API_BASE` in
 
 ## Deployment
 
-- API: `backend/assessment-api/render.yaml` blueprint, secrets set in the Render dashboard
+- API: `backend/assessment-api/render.yaml` blueprint, secrets set in the Render dashboard; the container runs as a non-root user
+- Behind a reverse proxy, set `TRUSTED_PROXY_HOPS` so rate limiting keys on the real client address; set `RATE_LIMIT_STORAGE_URI` (for example Redis) when running several instances
 - Frontend: Cloudflare Pages on `frontend/`, with `_headers` (security headers) and `_redirects` (clean `/test/<token>` links)
 
 ## Compliance documentation

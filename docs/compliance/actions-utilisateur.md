@@ -67,7 +67,7 @@ Si un candidat ou une autorité demande à reconstituer le traitement d'une éva
 2. Extraire depuis `sessions` : consentement, horodatages, statut
 3. Extraire depuis `scores` : tous les scores, `model_used`, `signals`, `report_text`
 4. Vérifier `model_used` = modèle IA effectivement utilisé (AI Act Art. 12)
-5. Vérifier `consent_version` → lire `legal/consentement-candidat-v1.md` pour le texte exact affiché
+5. Vérifier `consent_version` → lire `docs/compliance/consentement-candidat-v1.md` pour le texte exact affiché
 6. Documenter la réponse et l'envoyer dans les 30 jours (Art. 12§3 RGPD)
 
 ---
