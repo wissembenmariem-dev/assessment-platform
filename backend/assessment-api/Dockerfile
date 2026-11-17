@@ -1,6 +1,5 @@
 FROM python:3.12-slim
 
-# WeasyPrint runtime deps (PDF export)
 RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential libpango-1.0-0 libpangoft2-1.0-0 libcairo2 libgdk-pixbuf-2.0-0 \
         libffi-dev shared-mime-info fonts-liberation \
@@ -8,16 +7,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
+RUN useradd --create-home --uid 10001 app
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app ./app
-COPY scripts ./scripts
-COPY schema.sql .
+COPY --chown=app:app app ./app
+COPY --chown=app:app scripts ./scripts
+COPY --chown=app:app schema.sql .
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PORT=8000
+
+USER app
 
 EXPOSE 8000
 

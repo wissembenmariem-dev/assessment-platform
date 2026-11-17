@@ -32,6 +32,8 @@ class Settings(BaseSettings):
     notification_email: str = "notifications@example.com"
 
     environment: str = "development"
+    trusted_proxy_hops: int = 0
+    rate_limit_storage_uri: str = "memory://"
 
     @property
     def is_production(self) -> bool:

@@ -1,3 +1,4 @@
+import logging
 import io
 import base64
 from uuid import UUID
@@ -20,6 +21,7 @@ except (ImportError, OSError):
     WEASYPRINT_AVAILABLE = False
 
 supabase_admin = get_supabase_admin()
+log = logging.getLogger(__name__)
 router = APIRouter(prefix="/scores", tags=["pdf"])
 
 
@@ -358,7 +360,8 @@ async def export_pdf(
 
     try:
         radar_b64 = _generate_radar_png(m2)
-    except Exception:
+    except (ValueError, RuntimeError, OSError):
+        log.warning("Radar chart rendering failed", exc_info=True)
         radar_b64 = ""
 
     env = Environment(loader=BaseLoader())

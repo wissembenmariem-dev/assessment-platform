@@ -1,35 +1,18 @@
 import hmac
 from datetime import datetime, timedelta, timezone
-from collections import defaultdict
+
+import jwt
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
-from jose import jwt
 
 from app.core.config import settings
 from app.core.database import get_supabase_admin
+from app.core.rate_limit import limiter
 
 router = APIRouter(tags=["auth"])
 
 TOKEN_EXPIRE_HOURS = 12
 ALGORITHM = "HS256"
-
-_LOGIN_ATTEMPTS: dict[str, list[datetime]] = defaultdict(list)
-_RATE_LIMIT_MAX = 5
-_RATE_LIMIT_WINDOW = timedelta(minutes=15)
-
-
-def _check_rate_limit(ip: str) -> None:
-    now = datetime.now(timezone.utc)
-    cutoff = now - _RATE_LIMIT_WINDOW
-    attempts = [t for t in _LOGIN_ATTEMPTS[ip] if t > cutoff]
-    _LOGIN_ATTEMPTS[ip] = attempts
-    if len(attempts) >= _RATE_LIMIT_MAX:
-        raise HTTPException(
-            status_code=429,
-            detail="Trop de tentatives. Réessayez dans 15 minutes.",
-            headers={"Retry-After": "900"},
-        )
-    _LOGIN_ATTEMPTS[ip].append(now)
 
 supabase_admin = get_supabase_admin()
 
@@ -45,11 +28,8 @@ class LoginResponse(BaseModel):
 
 
 @router.post("/auth/login", response_model=LoginResponse)
+@limiter.limit("5/15minutes")
 async def login(body: LoginRequest, request: Request):
-    client_ip = request.headers.get("X-Forwarded-For", request.client.host if request.client else "unknown")
-    client_ip = client_ip.split(",")[0].strip()
-    _check_rate_limit(client_ip)
-
     email_match = hmac.compare_digest(body.email.lower().strip(), settings.recruiter_email.lower().strip())
     password_match = bool(settings.recruiter_password) and hmac.compare_digest(body.password, settings.recruiter_password)
 

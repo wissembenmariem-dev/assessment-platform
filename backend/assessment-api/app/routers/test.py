@@ -1,14 +1,13 @@
+import logging
+
 from fastapi import APIRouter, HTTPException, BackgroundTasks, Request, Depends
 from datetime import datetime, timezone
 
-from slowapi import Limiter
-from slowapi.util import get_remote_address
-
 from app.models.schemas import SessionPublic, QuestionOut, BulkAnswerSubmit, ConsentStart
 from app.core.database import get_supabase_admin
+from app.core.rate_limit import client_ip, limiter
 
-limiter = Limiter(key_func=get_remote_address)
-
+log = logging.getLogger(__name__)
 supabase_admin = get_supabase_admin()
 from app.services.scoring import (
     score_m1, score_m2, score_m3, score_m4,
@@ -52,15 +51,12 @@ async def start_session(token: str, payload: ConsentStart, request: Request):
         raise HTTPException(status_code=400, detail="Ce test a déjà été complété")
 
     if session.data["status"] == "pending":
-        client_ip = request.headers.get("X-Forwarded-For", request.client.host if request.client else "unknown")
-        client_ip = client_ip.split(",")[0].strip()
-
         supabase_admin.table("sessions").update({
             "status":          "in_progress",
             "started_at":      datetime.now(timezone.utc).isoformat(),
             "consent_at":      datetime.now(timezone.utc).isoformat(),
             "consent_version": payload.consent_version,
-            "consent_ip":      client_ip,
+            "consent_ip":      client_ip(request),
         }).eq("token", token).execute()
 
     return {"status": "in_progress"}
@@ -185,10 +181,8 @@ async def _process_results(session_id: str, level: str, modules: list, lang: str
         await _process_results_inner(
             session_id, level, modules, lang, candidate_name, candidate_email, answers
         )
-    except Exception as e:
-        import traceback
-        print(f"[process_results] ERREUR pour session {session_id}: {e}")
-        traceback.print_exc()
+    except Exception:
+        log.exception("Result processing failed for session %s", session_id)
 
 
 async def _process_results_inner(session_id: str, level: str, modules: list, lang: str,

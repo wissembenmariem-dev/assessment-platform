@@ -1,14 +1,15 @@
+import logging
 import os
-import sys
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
+from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
 from app.core.config import settings
+from app.core.rate_limit import limiter
 from app.routers import sessions, test, scores, auth
 from app.routers import candidate_rights
 
@@ -24,21 +25,18 @@ if _sentry_dsn:
         integrations=[FastApiIntegration()],
     )
 
-limiter = Limiter(key_func=get_remote_address)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+log = logging.getLogger("assessment")
 
 if settings.is_production:
     missing = settings.validate_production_config()
     if missing:
-        print(
-            f"\n[ERREUR CRITIQUE] Variables d'environnement manquantes ou invalides :\n"
-            + "\n".join(f"  ✗ {v}" for v in missing)
-            + "\n\nDéploiement interrompu. Remplir ces valeurs dans .env avant de relancer.\n"
-        )
-        sys.exit(1)
+        log.critical("Missing or invalid configuration: %s", ", ".join(missing))
+        raise SystemExit(1)
 
 app = FastAPI(
     title="Assessment API",
-    description="Plateforme d'évaluation psychométrique — Acme Talent",
+    description="Psychometric assessment API",
     version="2.0.0",
     docs_url="/docs" if settings.environment == "development" else None,
     redoc_url=None,
@@ -62,7 +60,6 @@ async def add_security_headers(request: Request, call_next):
     response = await call_next(request)
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
-    response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "geolocation=(), camera=(), microphone=()"
     response.headers["Content-Security-Policy"] = (

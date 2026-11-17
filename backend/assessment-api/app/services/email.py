@@ -1,6 +1,10 @@
+import logging
+
 import os
 import resend
 from app.core.config import settings
+
+log = logging.getLogger(__name__)
 
 FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "onboarding@resend.dev")
 
@@ -80,8 +84,8 @@ def send_candidate_invitation(
             "html": html,
         })
         return True
-    except Exception as e:
-        print(f"[email] Erreur invitation → {candidate_email}: {e}")
+    except Exception:
+        log.exception("Invitation email failed")
         return False
 
 
@@ -169,6 +173,6 @@ def send_completion_notification(
             "html": html,
         })
         return True
-    except Exception as e:
-        print(f"[email] Erreur notification complétion: {e}")
+    except Exception:
+        log.exception("Completion notification failed")
         return False

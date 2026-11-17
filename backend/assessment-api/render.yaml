@@ -11,6 +11,8 @@ services:
     envVars:
       - key: ENVIRONMENT
         value: production
+      - key: TRUSTED_PROXY_HOPS
+        value: "1"
       - key: PYTHON_VERSION
         value: "3.12"
       - key: SUPABASE_URL

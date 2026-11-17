@@ -1,6 +1,6 @@
+import jwt
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jose import jwt, JWTError
 
 from app.core.config import settings
 
@@ -20,5 +20,5 @@ def require_recruiter(
         if not recruiter_id:
             raise HTTPException(status_code=401, detail="Token invalide")
         return recruiter_id
-    except JWTError:
+    except jwt.PyJWTError:
         raise HTTPException(status_code=401, detail="Token invalide ou expiré")
